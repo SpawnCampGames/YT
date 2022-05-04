@@ -17,15 +17,21 @@ public class CarController : MonoBehaviour
     public float modifiedDrag;
     
     public float alignToGroundTime;
-    
+
+    Quaternion originalRotation;
+
+
     void Start()
     {
         // Detach Sphere from car
         sphereRB.transform.parent = null;
 
         normalDrag = sphereRB.drag;
+
+        originalRotation = transform.rotation;
+
     }
-    
+
     void Update()
     {
         // Get Input
@@ -42,13 +48,27 @@ public class CarController : MonoBehaviour
         transform.position = sphereRB.transform.position;
 
         // Raycast to the ground and get normal to align car with it.
-        RaycastHit hit;
-        isCarGrounded = Physics.Raycast(transform.position, -transform.up, out hit, 1f, groundLayer);
+        isCarGrounded = Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, 1f, groundLayer);
         
-        // Rotate Car to align with ground
-        Quaternion toRotateTo = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
-        transform.rotation = Quaternion.Slerp(transform.rotation, toRotateTo, alignToGroundTime * Time.deltaTime);
-        
+
+
+        if (isCarGrounded)
+        {
+            // Rotate Car to align with ground
+            Quaternion toRotateTo = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
+            transform.rotation = Quaternion.Slerp(transform.rotation, toRotateTo, alignToGroundTime * Time.deltaTime);
+
+        }
+        else
+        {
+            // Return Car to it's original rotation when not grounded
+            if (transform.rotation != originalRotation)
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, originalRotation, alignToGroundTime * Time.deltaTime);
+            }
+        }
+
+
         // Calculate Movement Direction
         moveInput *= moveInput > 0 ? fwdSpeed : revSpeed;
         
